@@ -1,0 +1,25 @@
+---
+- set_fact: docker_image={{ service_name }}
+
+- name: build image for {{ service_name }}
+  docker_image:
+    name: "{{ docker_image }}"
+    path: "{{ docker_logs_build_dir }}/{{ service_name }}"
+    state: present
+
+- name: stop {{ service_name }} container 
+  docker:
+    image: "{{ docker_image }}"
+    name: "{{ service_name }}"
+    state: absent
+
+- name: run {{ service_name }} container
+  docker:
+    env: "{{ env | default({}) }}"
+    expose: "{{ expose | default([]) }}"
+    image: "{{ docker_image }}"
+    name: "{{ service_name }}"
+    net: "{{ docker_logs_network_name | default('default') }}"
+    ports: "{{ ports | default([]) }}"
+    state: started
+    volumes: "{{ volumes | default([]) }}"

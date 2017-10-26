@@ -1,0 +1,50 @@
+---
+- hosts: all
+  remote_user: ubuntu
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes
+
+  roles:
+    - role: "azavea.swapfile"
+
+  vars:
+    # azavea.swapfile role
+    swapfile_size: "{{ swapfile_size }}"
+    swapfile_path: /swapfile
+
+    # Docker config
+    docker_logs_build_dir: /home/ubuntu/fluent-logs
+
+  tasks:
+    - name: install docker
+      apt: name=docker.io state=latest
+
+    - name: install docker-py
+      pip: name=docker-py
+
+    - name: copy Docker files to remote host
+      copy: src={{ playbook_root }}/files/docker/ dest={{ docker_logs_build_dir }}
+
+    # fluentd
+    - include: run_container.yml
+      vars:
+        env:
+          AWS_REGION: "{{ aws_region }}"
+          AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+          AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+          ELASTICSEARCH_HOST: "{{ elasticsearch_host }}"
+        expose:
+          - 24224
+        ports:
+          - 24224:24224
+        service_name: fluentd
+
+    - name: restart fluentd every hour
+      cron:
+        minute: 0
+        job: docker restart fluentd
