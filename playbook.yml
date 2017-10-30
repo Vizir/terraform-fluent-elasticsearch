@@ -46,5 +46,6 @@
 
     - name: restart fluentd every hour
       cron:
+        name: Restart Fluentd
         minute: 0
         job: docker restart fluentd
