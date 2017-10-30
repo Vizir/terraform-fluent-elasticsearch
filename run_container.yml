@@ -3,11 +3,12 @@
 
 - name: build image for {{ service_name }}
   docker_image:
+    force: yes
     name: "{{ docker_image }}"
     path: "{{ docker_logs_build_dir }}/{{ service_name }}"
     state: present
 
-- name: stop {{ service_name }} container 
+- name: stop {{ service_name }} container
   docker:
     image: "{{ docker_image }}"
     name: "{{ service_name }}"
